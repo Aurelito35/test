@@ -23,4 +23,51 @@
     const bust = 'v=' + Date.now(); // anti-cache
 
     // 3 sources possibles (même fichier) : Pages locale, jsDelivr, raw
-    const
+    const sources = [
+      './michelin.mp4?' + bust,
+      'https://cdn.jsdelivr.net/gh/Aurelito35/test@main/michelin.mp4?' + bust,
+      'https://raw.githubusercontent.com/Aurelito35/test/main/michelin.mp4?' + bust
+    ];
+
+    async function headOK(url){
+      try{
+        const r = await fetch(url, { method:'HEAD' });
+        return r.ok;
+      }catch(e){ return false; }
+    }
+
+    async function trySources(i=0){
+      if(i >= sources.length){
+        s.textContent = 'Aucune source lisible trouvée.';
+        return;
+      }
+      const url = sources[i];
+      s.textContent = `Test ${i+1}/${sources.length} : HEAD ${url}`;
+      if(!(await headOK(url))){
+        s.textContent = `HEAD KO → next`;
+        return trySources(i+1);
+      }
+
+      // tenter la lecture
+      s.textContent = `HEAD OK → load ${url}`;
+      v.src = url;
+      let triedNext = false;
+
+      v.onerror = () => {
+        if(!triedNext){
+          triedNext = true;
+          s.textContent = `Erreur lecture → next`;
+          trySources(i+1);
+        }
+      };
+
+      v.onloadeddata = () => {
+        s.textContent = `Lecture OK : ${url}`;
+        v.play().catch(()=>{}); // démarre si possible
+      };
+    }
+
+    trySources();
+  </script>
+</body>
+</html>
